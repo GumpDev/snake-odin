@@ -1,5 +1,6 @@
 package core
 
+import time "core:time"
 import rl "vendor:raylib"
 
 ObjectType :: enum {
@@ -13,11 +14,17 @@ PropertiesTypes :: union {
 	f32,
 	string,
 	rl.Vector2,
+	[dynamic]rl.Vector2,
 	rl.Vector3,
+	proc(),
+	GameObjectProc,
 }
+
 GameObjectProc :: #type proc(gObj: ^GameObject)
 
 GameObject :: struct {
+	_id:        i64,
+	tags:       [dynamic]string,
 	type:       ObjectType,
 	is_loaded:  bool,
 	position:   rl.Vector2,
@@ -25,12 +32,67 @@ GameObject :: struct {
 	ready:      GameObjectProc,
 	draw:       GameObjectProc,
 	update:     GameObjectProc,
+	destroy:    GameObjectProc,
 }
 
 gameObjects := [dynamic]GameObject{}
 
-registerGameObject :: proc(gObj: GameObject) {
-	append(&gameObjects, gObj)
+spawn :: proc(gObj: GameObject) -> i64 {
+	_id := time.time_to_unix_nano(time.now())
+	n := append(&gameObjects, gObj)
+	gameObjects[len(gameObjects) - 1]._id = _id
+	return _id
+}
+
+unspawn :: proc(gObj: ^GameObject) {
+	for i := 0; i < len(gameObjects); i += 1 {
+		if (gameObjects[i]._id == gObj._id) {
+			if gObj.destroy != nil {
+				gObj.destroy(&gameObjects[i])
+			}
+			free(gObj)
+			unordered_remove(&gameObjects, i)
+			break
+		}
+	}
+}
+
+getByTag :: proc(tag: string) -> [dynamic]^GameObject {
+	gObjs := [dynamic]^GameObject{}
+	for &gObj in gameObjects {
+		if gObj.tags != nil {
+			for _tag in gObj.tags {
+				if _tag == tag {
+					append(&gObjs, &gObj)
+					break
+				}
+			}
+		}
+	}
+	return gObjs
+}
+
+getFirstByTag :: proc(tag: string) -> ^GameObject {
+	gObjs := [dynamic]^GameObject{}
+	for &gObj in gameObjects {
+		if gObj.tags != nil {
+			for _tag in gObj.tags {
+				if _tag == tag {
+					return &gObj
+				}
+			}
+		}
+	}
+	return nil
+}
+
+get :: proc(id: i64) -> ^GameObject {
+	for i := 0; i < len(gameObjects); i += 1 {
+		if (gameObjects[i]._id == id) {
+			return &gameObjects[i]
+		}
+	}
+	return nil
 }
 
 runReady :: proc() {

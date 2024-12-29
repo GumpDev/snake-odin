@@ -2,6 +2,17 @@ package core
 
 import rl "vendor:raylib"
 
-createCamera :: proc() -> rl.Camera2D {
-	return rl.Camera2D{offset = {0, 0}, rotation = 0, target = {0, 0}, zoom = 1.0}
+camera2d: rl.Camera2D
+camera2dInitialized := false
+camera3d: rl.Camera3D
+camera3dInitialized := false
+
+initCamera2d :: proc(camera: rl.Camera2D) {
+	camera2dInitialized = true
+	camera2d = camera
+}
+
+initCamera3d :: proc(camera: rl.Camera3D) {
+	camera3dInitialized = true
+	camera3d = camera
 }
