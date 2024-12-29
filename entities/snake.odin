@@ -7,6 +7,7 @@ import rl "vendor:raylib"
 snake :: proc() {
 	properties: map[string]core.PropertiesTypes = {
 		"direction" = rl.Vector2{1, 0},
+		"speed"     = 75.0,
 	}
 
 	draw :: proc(gObj: ^core.GameObject) {
@@ -24,8 +25,9 @@ snake :: proc() {
 			gObj.properties["direction"] = rl.Vector2{0, 1}
 		}
 
+		speed := gObj.properties["speed"].(f32)
 		direction := gObj.properties["direction"].(rl.Vector2)
-		gObj.position += direction * 50.0 * rl.GetFrameTime()
+		gObj.position += direction * speed * rl.GetFrameTime()
 	}
 
 	core.registerGameObject(
